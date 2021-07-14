@@ -8,4 +8,5 @@ https://docs.google.com/spreadsheets/d/1o3iFfN9I3ediKU_zcIU0IF20__WJtoBkfzTJsAr_
 - Run: python wbs.py --save_name {name} --frame_length {length}
 
   name -> tên folder để save kết quả
+  
   length -> số frame của video chạy 
