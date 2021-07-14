@@ -13,5 +13,5 @@ https://docs.google.com/spreadsheets/d/1o3iFfN9I3ediKU_zcIU0IF20__WJtoBkfzTJsAr_
 - Evaluation: Theo hướng dẫn của repo https://github.com/Cartucho/mAP
 
 # References:
-https://github.com/ZFTurbo/Weighted-Boxes-Fusion
-https://github.com/Cartucho/mAP
+- https://github.com/ZFTurbo/Weighted-Boxes-Fusion
+- https://github.com/Cartucho/mAP
