@@ -8,6 +8,7 @@ SAVE_FOLDER = "ensemble_results/"
 class WBF_VTX(object):
     name2idx = {"person": 0}
     idx2name = {0: "person"}
+
     def __init__(self, opts, model_weighted, img_size=(1080, 1920), iou_thr=0.6, skip_box_thr=0.0001):
         self.opt = opts
         self.model_weighted = model_weighted
@@ -20,13 +21,25 @@ class WBF_VTX(object):
     def _check_condition_input(self):
 
         keys = list(self.model_weighted.keys())
-        print(keys)
-        num = len(glob.glob("{}/*".format(self.model_weighted[keys[0]])))
+        #print(keys)
 
-        for i in range(1, len(keys)):
-            num_ = len(glob.glob("{}/*".format(self.model_weighted[keys[i]])))
-            assert num == num_, "Length of frame between {} and {} is different".format(keys[0]. key[i])
-    
+        for i in range(0, len(keys)):
+            pred_paths = glob.glob("{}/*".format(self.model_weighted[keys[i]]["path_prediction"]))
+            num = len(pred_paths)
+            if(num != self.opt.frame_length):
+                tmp_path = "/".join(pred_paths[0].split("/")[:-1])
+                self._fill_result_files(tmp_path)
+
+    def _fill_result_files(self, folder):
+        max_num = 6 # frame_{max_num}
+        exist_frame = os.listdir(folder)
+        for idx in range(self.opt.frame_length):
+            frame_name = "frame_" + "0" * (6 - len(str(idx))) + str(idx) + ".txt"
+            if(frame_name not in exist_frame):
+                print(frame_name)
+                with open(os.path.join(folder, frame_name), "wt") as f:
+                    f.write("")
+
     def _normalize_coords(self, box):
         xmin, ymin, xmax, ymax = box
         nxmin, nymin, nxmax, nymax = xmin / self.img_size[1], ymin / self.img_size[0], xmax / self.img_size[1], ymax / self.img_size[0]
@@ -102,7 +115,7 @@ class WBF_VTX(object):
         
         frames = os.listdir(self.model_weighted[keys[0]]["path_prediction"])
         for frame_name in frames:
-            print("Process: ", frame_name)
+            #print("Process: ", frame_name)
             boxes, scores, labels = self._get_frame_wbf(frame_name, keys, weights)
             self._write_results(frame_name, [boxes, scores, labels])
 
@@ -110,20 +123,20 @@ class WBF_VTX(object):
         #print("Score: ", len(score_list))
 
 if __name__=="__main__":
-    parser = argparse.ArgumentParser(description='Change config for evaluation')
+    parser = argparse.ArgumentParser(description='Change config for ensembles')
     parser.add_argument('--save_name', type=str, required=True,
                                         help='name of result files')
-
+    parser.add_argument('--frame_length', type=int, default=19200, help="num frame of videos")
     args = parser.parse_args()
 
     model_weighted = {
-        "yolof": {
-            "weight": 0.7848,
-            "path_prediction": "outputs/mmdet/yolof"
+        "crowd": {
+            "weight": 2,
+            "path_prediction": "outputs/fairmot/crowdhuman_dla34"
         }, 
-        "hybrid_task_cascade": {
-            "weight": 0.7776,
-            "path_prediction": "outputs/mmdet/htc_x100"
+        "baseline":{
+            "weight": 3,
+            "path_prediction": "outputs/fairmot/fairmot_dla34"
         }
     }
     wbf = WBF_VTX(args, model_weighted)
