@@ -2,14 +2,14 @@ import numpy as np
 from ensemble_boxes import *
 import glob
 import os
-
+import argparse
 SAVE_FOLDER = "ensemble_results/"
 
 class WBF_VTX(object):
     name2idx = {"person": 0}
     idx2name = {0: "person"}
-    def __init__(self, model_weighted, img_size=(1080, 1920), iou_thr=0.6, skip_box_thr=0.0001):
-        
+    def __init__(self, opts, model_weighted, img_size=(1080, 1920), iou_thr=0.6, skip_box_thr=0.0001):
+        self.opt = opts
         self.model_weighted = model_weighted
         self.iou_thr = iou_thr
         self.skip_box_thr = skip_box_thr
@@ -75,7 +75,12 @@ class WBF_VTX(object):
     
     def _write_results(self, frame_name, results):
         boxes, scores, labels = results
-        with open(os.path.join(SAVE_FOLDER, frame_name), "wt") as f:
+        save_path = os.path.join(SAVE_FOLDER, self.opt.save_name)
+        # check folder exist
+        if(not os.path.exists(save_path)):
+            os.mkdir(save_path)
+
+        with open(os.path.join(save_path, frame_name), "wt") as f:
             for idx in range(len(boxes)):
                 boxes[idx] = self._scale_coords(boxes[idx])
                 line = WBF_VTX.idx2name[labels[idx]] + " " + str(scores[idx]) + " " + " ".join(list(map(str, boxes[idx])))
@@ -105,7 +110,12 @@ class WBF_VTX(object):
         #print("Score: ", len(score_list))
 
 if __name__=="__main__":
-    
+    parser = argparse.ArgumentParser(description='Change config for evaluation')
+    parser.add_argument('--save_name', type=str, required=True,
+                                        help='name of result files')
+
+    args = parser.parse_args()
+
     model_weighted = {
         "yolof": {
             "weight": 0.7848,
@@ -116,6 +126,6 @@ if __name__=="__main__":
             "path_prediction": "outputs/mmdet/htc_x100"
         }
     }
-    wbf = WBF_VTX(model_weighted)
+    wbf = WBF_VTX(args, model_weighted)
     wbf.run_wbf("")
 
