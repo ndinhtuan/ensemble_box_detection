@@ -3,18 +3,18 @@ from ensemble_boxes import *
 import glob
 import os
 import argparse
-SAVE_FOLDER = "ensemble_results/"
+SAVE_FOLDER = ""
 
 class WBF_VTX(object):
     name2idx = {"person": 0}
     idx2name = {0: "person"}
 
-    def __init__(self, opts, model_weighted, img_size=(1080, 1920), iou_thr=0.6, skip_box_thr=0.0001):
+    def __init__(self, opts, model_weighted, iou_thr=0.6, skip_box_thr=0.0001):
         self.opt = opts
         self.model_weighted = model_weighted
         self.iou_thr = iou_thr
         self.skip_box_thr = skip_box_thr
-        self.img_size = img_size # (h, w)
+        self.img_size = self.opt.img_size # w, h
 
         self._check_condition_input()
     
@@ -42,13 +42,13 @@ class WBF_VTX(object):
 
     def _normalize_coords(self, box):
         xmin, ymin, xmax, ymax = box
-        nxmin, nymin, nxmax, nymax = xmin / self.img_size[1], ymin / self.img_size[0], xmax / self.img_size[1], ymax / self.img_size[0]
+        nxmin, nymin, nxmax, nymax = xmin / self.img_size[0], ymin / self.img_size[1], xmax / self.img_size[0], ymax / self.img_size[1]
 
         return nxmin, nymin, nxmax, nymax
     
     def _scale_coords(self, box):
         nxmin, nymin, nxmax, nymax = box
-        xmin, ymin, xmax, ymax = nxmin * self.img_size[1], nymin * self.img_size[0], nxmax * self.img_size[1], nymax * self.img_size[0]
+        xmin, ymin, xmax, ymax = nxmin * self.img_size[0], nymin * self.img_size[1], nxmax * self.img_size[0], nymax * self.img_size[1]
 
         return xmin, ymin, xmax, ymax   
 
@@ -126,17 +126,24 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Change config for ensembles')
     parser.add_argument('--save_name', type=str, required=True,
                                         help='name of result files')
-    parser.add_argument('--frame_length', type=int, default=19200, help="num frame of videos")
+    parser.add_argument('--frame_length', type=str, default=19200, help="num frame of videos")
+    parser.add_argument('-n', '--path_list', nargs='+', default=[])
+    parser.add_argument('--img_size', nargs='+', type=str, help="Image resolution (w, h)")
+    
     args = parser.parse_args()
-
+    
+    args.frame_length = int(args.frame_length)
+    args.img_size = list(map(int, args.img_size))
+    print(args.path_list)
+    print(args.img_size)
     model_weighted = {
         "crowd": {
             "weight": 2,
-            "path_prediction": "outputs/fairmot/crowdhuman_dla34"
+            "path_prediction": args.path_list[0], 
         }, 
         "baseline":{
             "weight": 3,
-            "path_prediction": "outputs/fairmot/fairmot_dla34"
+            "path_prediction": args.path_list[1],
         }
     }
     wbf = WBF_VTX(args, model_weighted)
